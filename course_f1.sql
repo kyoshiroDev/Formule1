@@ -1,3 +1,5 @@
+USE course_f1;
+
 # Permet avec le DROP de supprimer la table avant de l'ajouter a nouveau
 DROP TABLE IF EXISTS circuit;
 DROP TABLE IF EXISTS course;
@@ -11,7 +13,7 @@ CREATE TABLE circuit(
     circuit_id INTEGER AUTO_INCREMENT PRIMARY KEY,
     pays VARCHAR(50),
     nom VARCHAR(50),
-    longueur FLOAT
+    longueur FLOAT # km
 );
 
 # Creation table course
@@ -56,3 +58,19 @@ CREATE TABLE course_pilote(
     # Ajouter une primary key a pilote_id et course_id
     CONSTRAINT course_pilote_pk PRIMARY KEY (pilote_id, course_id)
 );
+
+# Creation d'un index : augmentation des performances
+# Attention, cela prend de la place sur le disque
+#CREATE INDEX index_pays ON circuit(pays);
+
+# Je sais à l'avance que je vais avoir besoin de lancer plusieurs fois la requete
+# Création d'un objet SQL
+CREATE VIEW score_pilote AS
+(SELECT p.nom, p.prenom, cp.course_id, cp.position_pilote
+FROM pilote p
+JOIN course_pilote cp ON p.pilote_id = cp.pilote_id
+);
+
+# Inserer des données
+INSERT INTO circuit(pays, nom, longueur) VALUE ('France','Jose',2.5);
+INSERT INTO course(nom, date_course, circuit_id) VALUE ('test',CURDATE(),1);

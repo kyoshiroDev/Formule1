@@ -1,11 +1,12 @@
 USE course_f1;
 
 # Permet avec le DROP de supprimer la table avant de l'ajouter a nouveau
-DROP TABLE IF EXISTS circuit;
-DROP TABLE IF EXISTS course;
-DROP TABLE IF EXISTS equipe;
-DROP TABLE IF EXISTS pilote;
 DROP TABLE IF EXISTS course_pilote;
+DROP TABLE IF EXISTS course;
+DROP TABLE IF EXISTS circuit;
+DROP TABLE IF EXISTS pilote;
+DROP TABLE IF EXISTS equipe;
+DROP VIEW IF EXISTS score_pilote;
 
 -- Creation table course
 CREATE TABLE circuit(
@@ -61,16 +62,67 @@ CREATE TABLE course_pilote(
 
 # Creation d'un index : augmentation des performances
 # Attention, cela prend de la place sur le disque
-#CREATE INDEX index_pays ON circuit(pays);
+CREATE INDEX index_pays ON circuit(pays);
 
 # Je sais à l'avance que je vais avoir besoin de lancer plusieurs fois la requete
 # Création d'un objet SQL
 CREATE VIEW score_pilote AS
-(SELECT p.nom, p.prenom, cp.course_id, cp.position_pilote
+(SELECT p.nom as 'nom_pilote', p.prenom, c.nom as 'nom_course', c.date_course, cp.position_pilote
 FROM pilote p
 JOIN course_pilote cp ON p.pilote_id = cp.pilote_id
+JOIN course as c ON c.circuit_id = cp.course_id
 );
 
 # Inserer des données
-INSERT INTO circuit(pays, nom, longueur) VALUE ('France','Jose',2.5);
+INSERT INTO circuit(pays, nom, longueur) VALUES ('France','Jose',2.5),
+                                                ('Espagne','Josette',4),
+                                                ('Belgique','Herve',5);
 INSERT INTO course(nom, date_course, circuit_id) VALUE ('test',CURDATE(),1);
+INSERT INTO course(nom, date_course, circuit_id) VALUE ('course ecolo','2024-10-09',2);
+INSERT INTO equipe (pays, nom, directeur_technique) VALUE ('FRANCE', 'Studi', 'Jose');
+INSERT INTO pilote (nom, prenom, nationalite, date_naissance, equipe_id) VALUES ('Michel', 'Augustin',
+                                                                                 'FRancaise',
+                                                                                 '2023-10-09',
+                                                                                 1);
+INSERT INTO pilote (nom, prenom, nationalite, date_naissance, equipe_id) VALUES ('Josette', 'Jesaispas',
+                                                                                 'FRancaise',
+                                                                                 '2023-10-09',
+                                                                                 1);
+
+# 1. je veux rajouter un compteur de course sur les pilotes
+ALTER TABLE pilote ADD COLUMN compteur_course INTEGER NOT NULL;
+
+# Automatisation du compteur suite à une nouvelle insertion dans course_pilote avec un trigger
+CREATE OR REPLACE TRIGGER  update_compteur_pilote
+    AFTER INSERT ON course_pilote
+    FOR EACH ROW
+    BEGIN
+        # on a le traitement d'incrémentation
+        UPDATE pilote
+        SET compteur_course = compteur_course + 1
+        WHERE pilote_id = NEW.pilote_id;
+    END;
+
+# Vue 1
+INSERT INTO course_pilote (pilote_id, course_id, position_pilote) VALUE (1,1,5);
+INSERT INTO course_pilote (pilote_id, course_id, position_pilote) VALUE (1,2,3);
+
+# Appel de la vue : 1
+SELECT * FROM score_pilote;
+
+# Vue 2
+INSERT INTO course_pilote (pilote_id, course_id, position_pilote) VALUE (2,2,2);
+# Appel de la vue : 2
+SELECT * FROM score_pilote;
+
+# Affichage table pilote
+SELECT * FROM pilote;
+
+
+
+
+
+
+
+
+

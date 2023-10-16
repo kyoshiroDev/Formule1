@@ -93,7 +93,7 @@ INSERT INTO pilote (nom, prenom, nationalite, date_naissance, equipe_id) VALUES 
 ALTER TABLE pilote ADD COLUMN compteur_course INTEGER NOT NULL;
 
 # Automatisation du compteur suite à une nouvelle insertion dans course_pilote avec un trigger
-CREATE OR REPLACE TRIGGER  update_compteur_pilote
+CREATE OR REPLACE TRIGGER update_compteur_pilote
     AFTER INSERT ON course_pilote
     FOR EACH ROW
     BEGIN
